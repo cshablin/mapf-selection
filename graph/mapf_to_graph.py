@@ -3,7 +3,7 @@ import os
 
 # with open("data/from-azure/kiva/Instances/kiva_0-35-0", "r") as f:
 # with open("data/from-azure/big/Instances/Instance-60-30-70-0", "r") as f:
-from mapf_graph import MapfGraph
+from src.utils.mapfgraph import MapfGraph
 
 mapf_dir = 'AllData'
 # output_dir = '../edgelists/' + mapf_dir + '/'

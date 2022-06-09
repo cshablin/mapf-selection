@@ -7,7 +7,7 @@ import pandas as pd
 
 from hyperopt import space_eval
 
-from HyperoptObjective import HyperoptObjective
+from src.HyperoptObjective import HyperoptObjective
 
 
 class MapfModel:

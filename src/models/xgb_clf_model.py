@@ -1,15 +1,15 @@
 import os
 from pathlib import Path
 import hyperopt
-from metrics import normalized_coverage_score, normalized_accuracy_score, cumsum_score, runtime_adjusted_coverage_score
-from models.mapf_model import MapfModel
+from src.metrics import normalized_coverage_score, normalized_accuracy_score, cumsum_score, runtime_adjusted_coverage_score
+from src.models.mapf_model import MapfModel
 import xgboost as xgb
 import numpy as np
-from preprocess import Preprocess
+from src.preprocess import Preprocess
 from sklearn.model_selection import GroupShuffleSplit
 import shap
 import matplotlib.pyplot as plt
-from mapf_eda import MapfEDA
+from src.mapf_eda import MapfEDA
 from joblib import dump, load
 
 
