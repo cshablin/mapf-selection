@@ -2,6 +2,8 @@ import linecache
 import os
 import zipfile
 import itertools
+from typing import Dict
+import json
 
 from src.utils.graph_utils import mark_cell_as_free, mark_cell_as_obstacle, from_1d_to_2d, \
     from_2d_to_1d, networkx_to_igraph
@@ -11,6 +13,12 @@ import networkx as nx
 from timeit import default_timer as timer
 import seaborn as sns
 from matplotlib.colors import to_rgb
+
+root_graph_json_folder = f'C:\my_stuff\BGU\courses\\2022\Collaboration_AI\project\Dataset\graph_as_json'
+algo_2_index = {'icts': 0, 'epea': 1, 'sat': 2, 'cbsh-c': 3, 'lazycbs': 4 }
+start_label = '2'
+goal_label = '1'
+empty_label = '0'
 
 
 def find_k_collisions(path, paths, k):
@@ -104,24 +112,52 @@ class MapfGraph:
         goal_x = int(agent_data[7])
         return (start_x, start_y), (goal_x, goal_y)
 
-    def load_agents_from_scen(self, scenfile, n_agents, instanceid, n_agent_start=0):
+    def load_agents_from_scen(self, scenfile, n_agents, instanceid, map_type, grid_name, problem_type, y, n_agent_start=0):
         red_green=True
         self.instanceid = instanceid
         self.agents_start_pos = []
         self.agents_goal_pos = []
         self.num_agents = n_agents
         cmap = get_cmap(n_agents, red_green=red_green)
+
+        nodes2label = {}
+        all_connected_nodes = set()
+        U = self.G.to_undirected()
+        edges = []
+        for edge in U.edges:
+            edges.append([edge[0], edge[1]])
+
+            all_connected_nodes.add(edge[0])
+            all_connected_nodes.add(edge[1])
+        for node in all_connected_nodes:
+            nodes2label[str(node)] = empty_label
+        winning_alg = y
+        agents_fortlets = []
+        grid = self.grid_size
+        # edges = self.G.edges
         for i in range(n_agent_start + 2, n_agent_start + n_agents + 2):
             agent_row = linecache.getline(scenfile, i)
             if agent_row == '':  # No such agent exists
                 continue
             start, goal = MapfGraph.agents_from_scen_row(agent_row)
+            agents_fortlets.append([start[0], start[1], goal[0], goal[1]])
             if red_green:
-                self.add_agent_to_graph(start, goal, color=None)
+                self.add_agent_to_graph(start, goal, map_type, grid_name, problem_type, instanceid, nodes2label, color=None)
             else:
-                self.add_agent_to_graph(start, goal, color=cmap[i-2])
+                self.add_agent_to_graph(start, goal, map_type, grid_name, problem_type, instanceid, nodes2label, color=cmap[i-2])
+        graph_json = self.build_json(edges, nodes2label, winning_alg, agents_fortlets, grid)
+        self.save_to_json(map_type, grid_name, problem_type, instanceid, n_agents, graph_json)
 
-    def add_agent_to_graph(self, start, goal, color=None):
+    def build_json(self, edges, nodes2label, winning_alg, agents_fortlets, grid) -> Dict:
+        result = {'edges': edges,
+                  'labels': nodes2label,
+                  'target': algo_2_index[winning_alg.replace(' Runtime', '', 1)],
+                  'agents': agents_fortlets,
+                  'grid_dim': grid
+                  }
+        return result
+
+    def add_agent_to_graph(self, start, goal, map_type, grid_name, problem_type, instance_id, nodes2label, color=None):
         if color is None:
             start_color = to_rgb('green')
             goal_color = to_rgb('red')
@@ -136,13 +172,34 @@ class MapfGraph:
         start_1d = from_2d_to_1d(start, self.grid_size[1])
         goal_1d = from_2d_to_1d(goal, self.grid_size[1])
 
+        nodes2label[str(start_1d)] = start_label
+        nodes2label[str(goal_1d)] = goal_label
+
         self.G.nodes[start_1d]['color'] = start_color
         self.G.nodes[start_1d]['size'] = 1
         self.G.nodes[start_1d]['type'] = 'agent_start'
 
-        self.G.node[goal_1d]['color'] = goal_color
-        self.G.node[goal_1d]['size'] = 1
+        self.G.nodes[goal_1d]['color'] = goal_color
+        self.G.nodes[goal_1d]['size'] = 1
         self.G.nodes[goal_1d]['type'] = 'agent_goal'
+
+    def save_to_json(self, grid_type, grid_name, problem_type, instance_id, n_agents, graph: Dict):
+        map_type_folder = root_graph_json_folder + os.path.sep + grid_type
+        if not os.path.exists(map_type_folder):
+            os.makedirs(map_type_folder)
+        grid_name_folder = map_type_folder + os.path.sep + grid_name
+        if not os.path.exists(grid_name_folder):
+            os.makedirs(grid_name_folder)
+        problem_type_folder = grid_name_folder + os.path.sep + problem_type
+        if not os.path.exists(problem_type_folder):
+            os.makedirs(problem_type_folder)
+
+        mapf_problem_file = problem_type_folder + os.path.sep + f'{grid_name}_{problem_type}_{instance_id}_agents_{n_agents}' + '.json'
+        if os.path.exists(mapf_problem_file):
+            return
+        with open(mapf_problem_file, "w") as fp:
+            json.dump(graph, fp, indent=True)
+        os.chmod(mapf_problem_file, 0o644)
 
     def feature_extraction(self, with_cell_features=True):
         fit_start = timer()

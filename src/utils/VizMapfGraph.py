@@ -147,14 +147,20 @@ class VizMapfGraph(MapfGraph):
 
 
 tqdm.pandas()
-scen_suffix = 'custom'
-base_dir = Path('../../data/from-vpn')
+# scen_suffix = 'custom'
+scen_suffix = 'even-random'
+base_dir = Path(f'C:\\my_stuff\\BGU\\courses\\2022\\Collaboration_AI\\project\\Dataset')
 maps_dir = base_dir / 'maps'
 scen_dir = base_dir / 'scen/scen-{s}/'.format(s=scen_suffix)
+skip_unless_nth = 20
+high_max_agents_allowed = 40
 
 
-def visualize_mapf_problem(row, graph, grid_name=None, instance_id=None, problem_type=None):
+def visualize_mapf_problem(row, graph, grid_name=None, instance_id=None, problem_type=None, map_type=None, max_agents: int=None):
+
     n_agents = row['NumOfAgents']
+    if should_skip(max_agents, n_agents):
+        return
     curr_scen = str(scen_dir / row['scen'])
     if instance_id is None:
         instance_id = row['InstanceId']
@@ -172,12 +178,23 @@ def visualize_mapf_problem(row, graph, grid_name=None, instance_id=None, problem
         print("Skipping already existing mapf file {f}".format(f=mapf_image_path))
         return
     # print("Visualizing {f}".format(f=mapf_image_path))
-    graph.load_agents_from_scen(curr_scen, n_agents, instance_id)
-    graph.draw_graph_to(mapf_image_path)
+    graph.load_agents_from_scen(curr_scen, n_agents, instance_id, map_type, grid_name, problem_type, row['Y'])
+    # graph.draw_graph_to(mapf_image_path)
 
 
-def visualize_mapf_scen(scen):
+def should_skip(max_agents: int, current_agents) -> bool:
+    if current_agents <= 20:
+        return False
+    if max_agents > high_max_agents_allowed:
+        return False if current_agents % skip_unless_nth == 0 else True
+    return False
+
+
+def visualize_mapf_scen(scen: pd.DataFrame):
     grid_name, instance_id, problem_type = scen.name
+    map_type = scen.maptype.iloc[0]
+    max_agents = scen.shape[0] + 1
+    print(f'max agents {max_agents}')
     curr_map = str(maps_dir / scen['map'].iloc[0])
     if not os.path.isfile(curr_map):
         print("Skipping missing map: {m}".format(m=curr_map))
@@ -185,11 +202,12 @@ def visualize_mapf_scen(scen):
     print("Visualizing map: {m}".format(m=curr_map))
     graph = VizMapfGraph(map_filename=curr_map)
     graph.create_graph()
-    scen.apply(lambda x: visualize_mapf_problem(x, graph, grid_name, instance_id, problem_type), axis=1)
+    scen.apply(lambda x: visualize_mapf_problem(x, graph, grid_name, instance_id, problem_type, map_type, max_agents), axis=1)
 
 
 def main():
-    df = pd.read_csv('../lazy-epea-icts-cbsh-sat-labelled-custom-with-features.csv')
+    # df = pd.read_csv(base_dir / 'csv/lazy-epea-icts-cbsh-sat-labelled-custom-with-features.csv')
+    df = pd.read_csv(base_dir / 'csv/MovingAIData-labelled-with-features.csv')
 
     if 'map' not in df.columns or df['map'].isna().any():
         df['map'] = df.GridName + '.map'
@@ -199,4 +217,4 @@ def main():
     df.groupby(['GridName', 'InstanceId', 'problem_type']).progress_apply(visualize_mapf_scen)
 
 
-# main()
+main()
