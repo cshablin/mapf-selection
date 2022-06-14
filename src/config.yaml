@@ -1,6 +1,7 @@
-base_path: '../data/from-vpn'
-results_path: '../data/from-vpn/AllData.csv'
-experiments_path: '../data/from-vpn/experiments/customAndMovingAI'
+# base_path: '../data/from-vpn'
+base_path: 'C:\\my_stuff\\BGU\\courses\\2022\\Collaboration_AI\\project\\Dataset'
+results_path: 'C:\\my_stuff\\BGU\\courses\\2022\\Collaboration_AI\\project\\Dataset\\MovingAIData-labelled-with-features.csv'
+experiments_path: 'C:\my_stuff\BGU\courses\2022\Collaboration_AI\project\Dataset\Experiments'
 features: [
     'GridRows',
     'GridColumns',
@@ -65,9 +66,9 @@ algorithms: [
   'lazycbs'
 ]
 
-with_models: True
+with_models: False
 unsolved_problems_only: 'All' # One of: 'All','AllSuccess','AtLeastOneFail','OnlyOneWin'
-data_split_method: 'in-map' # One of: 'in-map', 'in-maptype', 'between-maptypes', 'in-problem-type', 'no-split'
+data_split_method: 'in-maptype' # One of: 'in-map', 'in-maptype', 'between-maptypes', 'in-problem-type', 'no-split'
 group_splits: 3
 inner_splits: 1
 hyperopt_evals: 3

@@ -47,7 +47,8 @@ with_models = config['with_models']
 # data_path = 'Alldata-labelled-custom-with-features.csv'
 # data_path = 'AllData-labelled-with-features - without cell.csv'  # Even set only
 # data_path = 'lazy-epea-icts-cbsh-sat-labelled-custom.csv'
-data_path = 'lazy-epea-icts-cbsh-sat-labelled-custom-with-features.csv'
+# data_path = 'lazy-epea-icts-cbsh-sat-labelled-custom-with-features.csv'
+data_path = f'C:\\my_stuff\\BGU\\courses\\2022\\Collaboration_AI\\project\\Dataset\\csv\\MovingAIData-labelled-with-features.csv'
 exp_name = 'custom/' + exp_name
 
 # data_path = 'MovingAIAndCustomData-labelled.csv'
